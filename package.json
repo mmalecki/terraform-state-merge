@@ -1,7 +1,7 @@
 {
   "name": "terraform-state-merge",
   "version": "0.0.0",
-  "description": "",
+  "description": "Merge any number of Terraform state files into one",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
