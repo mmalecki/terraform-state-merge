@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+'use strict'
+
+const fs = require('fs')
+const deepDiff = require('deep-diff')
+
+const files = process.argv.slice(2).map(f => fs.readFileSync(f))
+// Sort them. We can assume that if Terraform changed some resources in between
+// our serials, the latest serial is the most up to date one.
+const jsons = files.map(JSON.parse).sort((a, b) => a.serial - b.serial)
+const modules = jsons.map(j => j.modules)
+
+var merged = {}
+
+function stash(modules) {
+  modules.forEach((m) => {
+    const path = m.path.join('.')
+    merged[path] = m
+  })
+}
+
+modules.forEach(stash)
+
+merged = Object.keys(merged).map((k) => merged[k])
+console.log(JSON.stringify({
+  version: 1,
+  serial: jsons[jsons.length - 1].serial + 1,
+  modules: merged
+}, null, 4))
