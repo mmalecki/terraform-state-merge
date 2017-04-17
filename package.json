@@ -14,5 +14,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/mmalecki/terraform-state-merge.git"
+  },
+  "dependencies": {
+    "deep-diff": "^0.3.4"
   }
 }
