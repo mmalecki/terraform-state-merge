@@ -1,6 +1,6 @@
 {
   "name": "terraform-state-merge",
-  "version": "0.1.0",
+  "version": "0.1.0-1",
   "description": "Merge any number of Terraform state files into one",
   "main": "index.js",
   "scripts": {
