@@ -23,7 +23,8 @@ modules.forEach(stash)
 
 merged = Object.keys(merged).map((k) => merged[k])
 console.log(JSON.stringify({
-  version: 1,
+  version: jsons[jsons.length - 1].version,
+  terraform_version: jsons[jsons.length - 1].terraform_version,
   serial: jsons[jsons.length - 1].serial + 1,
   modules: merged
 }, null, 4))
