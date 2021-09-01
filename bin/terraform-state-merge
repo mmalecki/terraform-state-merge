@@ -2,29 +2,47 @@
 'use strict'
 
 const fs = require('fs')
-const deepDiff = require('deep-diff')
 
 const files = process.argv.slice(2).map(f => fs.readFileSync(f))
 // Sort them. We can assume that if Terraform changed some resources in between
 // our serials, the latest serial is the most up to date one.
 const jsons = files.map(JSON.parse).sort((a, b) => a.serial - b.serial)
-const modules = jsons.map(j => j.modules)
+const resources = jsons.map(j => j.resources)
 
 var merged = {}
 
-function stash(modules) {
-  modules.forEach((m) => {
-    const path = m.path.join('.')
+function stash(resources) {
+  resources.forEach((m) => {
+    const path = [m.module, m.type, m.name].join('.')
+
+    // This allows support for objects with for_each
+    // If state1 has null_resource.example["hello"]
+    // and state2 has null_resource.example["bob"]
+    // Then we want to end up with both those resources in the final state
+    if ( path in merged ) {
+        const current = merged[path]
+        const newKeys = m.instances.map((i) => i["index_key"])
+
+        current.instances.forEach( (i) => {
+            // Because we want to honor the promise of "last file takes precedent"
+            // we only included index_keys from the _previous_ statefiles which do not exist in the current statefile
+            // Thus, if both state1 and state2 have null_resource.example["hello"]
+            // then state2's null_resource.example["hello"] will override state1's null_resource.example["hello"]
+            if ( ! newKeys.includes(i.index_key) ) {
+                m.instances.push(i)
+            }
+        })
+    }
     merged[path] = m
   })
 }
 
-modules.forEach(stash)
+resources.forEach(stash)
 
 merged = Object.keys(merged).map((k) => merged[k])
 console.log(JSON.stringify({
   version: jsons[jsons.length - 1].version,
   terraform_version: jsons[jsons.length - 1].terraform_version,
   serial: jsons[jsons.length - 1].serial + 1,
-  modules: merged
+  resources: merged
 }, null, 4))
